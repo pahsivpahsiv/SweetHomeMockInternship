@@ -727,6 +727,16 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    return print(g, pageFormat, pageIndex, false);
+  }
+
+  /**
+   * Prints this component to make it fill <code>pageFormat</code> imageable size.
+   * If <code>levelColumnPrinted</code> is <code>true</code>, the printed table contains a level column
+   * even if it isn't displayed in this table, without changing the columns of this table.
+   */
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex, 
+                   boolean levelColumnPrinted) throws PrinterException {
     // Create a printable column model from the column model of this table 
     // with printable renderers for each column
     DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
@@ -750,8 +760,18 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
-    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+    List<TableColumn> printedColumns = Collections.list(columnModel.getColumns());
+    if (levelColumnPrinted && columnModel instanceof FurnitureTableColumnModel) {
+      boolean levelColumnDisplayed = false;
+      for (TableColumn column : printedColumns) {
+        levelColumnDisplayed |= column.getIdentifier() == HomePieceOfFurniture.SortableProperty.LEVEL;
+      }
+      if (!levelColumnDisplayed) {
+        printedColumns.add(((FurnitureTableColumnModel)columnModel).availableColumns.get(
+            HomePieceOfFurniture.SortableProperty.LEVEL));
+      }
+    }
+    for (final TableColumn tableColumn : printedColumns) {
       // Create a printable column from existing table column
       TableColumn printableColumn = new TableColumn();
       printableColumn.setIdentifier(tableColumn.getIdentifier());
